@@ -24,7 +24,7 @@ func (t transaction) Options() dal.TransactionOptions {
 }
 
 func (t transaction) Get(ctx context.Context, record dal.Record) error {
-	return getRecord(ctx, record, t.isCacheable, t.ro.Get)
+	return getRecord(ctx, record, "tx", t.isCacheable, t.ro.Get)
 }
 
 func (t transaction) GetMulti(ctx context.Context, records []dal.Record) error {
@@ -79,7 +79,7 @@ func (t transaction) UpdateRecord(ctx context.Context, record dal.Record, update
 		return
 	}
 	if err = t.rw.UpdateRecord(ctx, record, updates, preconditions...); err == nil {
-		if err = setRecordToCache(ctx, record, "UpdateRecord"); err != nil {
+		if err = setRecordToCache(ctx, record, "UpdateRecord()"); err != nil {
 			return
 		}
 	}

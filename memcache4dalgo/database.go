@@ -59,5 +59,5 @@ func (v database) QueryAllRecords(ctx context.Context, query dal.Query) (records
 }
 
 func (v database) Get(ctx context.Context, record dal.Record) (err error) {
-	return getRecord(ctx, record, v.isCacheable, v.db.Get)
+	return getRecord(ctx, record, "db", v.isCacheable, v.db.Get)
 }

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/dal-go/dalgo/dal"
 	"google.golang.org/appengine/memcache"
+	"strings"
 )
 
 type transaction struct {
@@ -69,6 +70,9 @@ func (t transaction) UpdateMulti(ctx context.Context, keys []*dal.Key, updates [
 func deleteCached(ctx context.Context, key *dal.Key) {
 	mk := key.String()
 	_ = memcache.Delete(ctx, mk)
+	if Debugf != nil {
+		Debugf(ctx, "memcache4dalgo.deleteCached: %s", mk)
+	}
 }
 
 func deleteCachedByKeys(ctx context.Context, keys []*dal.Key) {
@@ -77,6 +81,9 @@ func deleteCachedByKeys(ctx context.Context, keys []*dal.Key) {
 		mks[i] = k.String()
 	}
 	_ = memcache.DeleteMulti(ctx, mks)
+	if Debugf != nil {
+		Debugf(ctx, "memcache4dalgo.deleteCachedByKeys: %v", strings.Join(mks, ", "))
+	}
 }
 
 func deleteCached4records(ctx context.Context, records []dal.Record) {

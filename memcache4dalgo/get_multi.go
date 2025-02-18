@@ -19,6 +19,9 @@ func getMultiRecords(ctx context.Context, records []dal.Record, getMulti func(co
 		for key, item := range items {
 			if err = json.Unmarshal(item.Value, recordsByKey[key].Data()); err == nil {
 				delete(recordsByKey, key)
+				if Debugf != nil {
+					Debugf(ctx, "memcache4dalgo.getMultiRecords: hit %s", key)
+				}
 			}
 		}
 	}

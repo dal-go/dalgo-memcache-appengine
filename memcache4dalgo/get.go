@@ -12,6 +12,9 @@ func getRecord(ctx context.Context, record dal.Record, get func(ctx context.Cont
 	var item *memcache.Item
 	if item, err = memcache.Get(ctx, key); err == nil {
 		if err = json.Unmarshal(item.Value, record.Data()); err == nil {
+			if Debugf != nil {
+				Debugf(ctx, "memcache4dalgo.getRecord: hit %s", key)
+			}
 			return
 		}
 	}

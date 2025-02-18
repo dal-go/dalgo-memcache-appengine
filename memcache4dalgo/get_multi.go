@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/dal-go/dalgo/dal"
 	"google.golang.org/appengine/memcache"
+	"strings"
 )
 
 func getMultiRecords(ctx context.Context, records []dal.Record, getMulti func(context.Context, []dal.Record) error) error {
@@ -33,5 +34,21 @@ func getMultiRecords(ctx context.Context, records []dal.Record, getMulti func(co
 		}
 		records = records[:len(recordsByKey)]
 	}
-	return getMulti(ctx, records)
+	if err = getMulti(ctx, records); err == nil {
+		var mks []string
+		for _, r := range records {
+			key := r.Key().String()
+			var value []byte
+			if value, err = json.Marshal(r.Data()); err == nil {
+				_ = memcache.Set(ctx, &memcache.Item{Value: value, Key: key})
+				if Debugf != nil {
+					mks = append(mks, key)
+				}
+			}
+		}
+		if Debugf != nil && len(mks) > 0 {
+			Debugf(ctx, "memcache4dalgo.getMultiRecords: miss & set %v", strings.Join(mks, ", "))
+		}
+	}
+	return err
 }

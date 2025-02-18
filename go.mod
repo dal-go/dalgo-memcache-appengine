@@ -2,7 +2,7 @@ module github.com/dal-go/dalgo-memcache-appengine
 
 go 1.23.6
 
-require github.com/dal-go/dalgo v0.16.1
+require github.com/dal-go/dalgo v0.17.0
 
 require (
 	github.com/golang/protobuf v1.5.2 // indirect

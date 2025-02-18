@@ -17,24 +17,32 @@ func getRecord(
 	if !isCacheable(key) {
 		return get(ctx, record)
 	}
-	mc := key.String()
+	mk := key.String()
 	var item *memcache.Item
-	if item, err = memcache.Get(ctx, mc); err == nil {
+	if item, err = memcache.Get(ctx, mk); err == nil {
 		record.SetError(nil)
 		if err = json.Unmarshal(item.Value, record.Data()); err == nil {
 			if Debugf != nil {
-				Debugf(ctx, "memcache4dalgo.getRecord: hit %s", mc)
+				Debugf(ctx, "memcache4dalgo.getRecord: hit %s", mk)
 			}
 			return
 		}
 	}
 	if err = get(ctx, record); err == nil {
-		var value []byte
-		if value, err = json.Marshal(record.Data()); err == nil {
-			_ = memcache.Set(ctx, &memcache.Item{Value: value, Key: mc})
-			if Debugf != nil {
-				Debugf(ctx, "memcache4dalgo.getRecord: miss & set %s", mc)
-			}
+		if err = setRecordToCache(ctx, record, "getRecord"); err != nil {
+			return
+		}
+	}
+	return
+}
+
+func setRecordToCache(ctx context.Context, record dal.Record, caller string) (err error) {
+	var value []byte
+	if value, err = json.Marshal(record.Data()); err == nil {
+		mk := record.Key().String()
+		_ = memcache.Set(ctx, &memcache.Item{Value: value, Key: mk})
+		if Debugf != nil {
+			Debugf(ctx, "memcache4dalgo.%s: miss & set %s", caller, mk)
 		}
 	}
 	return

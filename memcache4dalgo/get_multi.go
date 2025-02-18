@@ -13,7 +13,7 @@ func getMultiRecords(
 	records []dal.Record,
 	isCacheable func(key *dal.Key) bool,
 	getMulti func(context.Context, []dal.Record) error,
-) error {
+) (err error) {
 	keys := make([]*dal.Key, len(records))
 	mks := make([]string, 0, len(records))
 	recordsByKey := make(map[string]dal.Record, len(records))
@@ -21,12 +21,12 @@ func getMultiRecords(
 		keys[i] = r.Key()
 		mk := keys[i].String()
 		recordsByKey[mk] = r
-		if isCacheable(keys[i]) {
+		if isCacheable == nil || isCacheable(keys[i]) {
 			mks = append(mks, mk)
 		}
 	}
-	itemsByKey, err := memcache.GetMulti(ctx, mks)
-	if err == nil {
+	var itemsByKey map[string]*memcache.Item
+	if itemsByKey, err = memcache.GetMulti(ctx, mks); err == nil {
 		for key, item := range itemsByKey {
 			r := recordsByKey[key]
 			r.SetError(nil)
@@ -46,32 +46,39 @@ func getMultiRecords(
 		}
 		records = records[:len(recordsByKey)]
 		if err = getMulti(ctx, records); err == nil {
-			mks = mks[:0]
-			items := make([]*memcache.Item, 0, len(records))
-
-			for _, r := range records {
-				if r.Error() != nil {
-					continue
-				}
-				key := r.Key().String()
-				var value []byte
-				if value, err = json.Marshal(r.Data()); err == nil {
-					items = append(items, &memcache.Item{Value: value, Key: key})
-					if Debugf != nil {
-						mks = append(mks, key)
-					}
-				}
-			}
-			if len(items) == 1 {
-				_ = memcache.Set(ctx, items[0])
-			} else if len(items) > 1 {
-				_ = memcache.SetMulti(ctx, items)
-			}
-
-			if Debugf != nil && len(mks) > 0 {
-				Debugf(ctx, "memcache4dalgo.getMultiRecords: miss & set %v", strings.Join(mks, ", "))
+			if err = setRecordsToCache(ctx, records, "getMultiRecords", isCacheable); err != nil {
+				return err
 			}
 		}
 	}
 	return err
+}
+
+func setRecordsToCache(ctx context.Context, records []dal.Record, caller string, isCacheable func(key *dal.Key) bool) (err error) {
+	mks := make([]string, 0, len(records))
+	items := make([]*memcache.Item, 0, len(records))
+	for _, r := range records {
+		key := r.Key()
+		if !isCacheable(key) {
+			continue
+		}
+		mk := key.String()
+		var value []byte
+		if value, err = json.Marshal(r.Data()); err == nil {
+			items = append(items, &memcache.Item{Value: value, Key: mk})
+			if Debugf != nil {
+				mks = append(mks, mk)
+			}
+		}
+	}
+	if len(items) == 1 {
+		err = memcache.Set(ctx, items[0])
+	} else if len(items) > 1 {
+		err = memcache.SetMulti(ctx, items)
+	}
+	if Debugf != nil && len(mks) > 0 {
+		Debugf(ctx, "memcache4dalgo.%s: %v", caller, strings.Join(mks, ", "))
+	}
+	return
+
 }

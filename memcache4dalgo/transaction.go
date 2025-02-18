@@ -39,76 +39,123 @@ func (t transaction) QueryAllRecords(ctx context.Context, query dal.Query) (reco
 	return t.ro.QueryAllRecords(ctx, query)
 }
 
-func (t transaction) Set(ctx context.Context, record dal.Record) error {
-	deleteCached(ctx, record.Key(), t.isCacheable)
+func (t transaction) Set(ctx context.Context, record dal.Record) (err error) {
+	if err = deleteFromCacheByKey(ctx, record.Key(), t.isCacheable); err != nil {
+		return
+	}
 	return t.rw.Set(ctx, record)
 }
 
-func (t transaction) SetMulti(ctx context.Context, records []dal.Record) error {
-	deleteCached4records(ctx, records)
+func (t transaction) SetMulti(ctx context.Context, records []dal.Record) (err error) {
+	if err = deleteRecordsFromCache(ctx, records, t.isCacheable); err != nil {
+		return err
+	}
 	return t.rw.SetMulti(ctx, records)
 }
 
-func (t transaction) Delete(ctx context.Context, key *dal.Key) error {
-	deleteCached(ctx, key, t.isCacheable)
+func (t transaction) Delete(ctx context.Context, key *dal.Key) (err error) {
+	if err = deleteFromCacheByKey(ctx, key, t.isCacheable); err != nil {
+		return
+	}
 	return t.rw.Delete(ctx, key)
 }
 
-func (t transaction) DeleteMulti(ctx context.Context, keys []*dal.Key) error {
-	deleteCachedByKeys(ctx, keys, t.isCacheable)
+func (t transaction) DeleteMulti(ctx context.Context, keys []*dal.Key) (err error) {
+	if err = deleteCachedByKeys(ctx, keys, t.isCacheable); err != nil {
+		return
+	}
 	return t.rw.DeleteMulti(ctx, keys)
 }
 
-func (t transaction) Update(ctx context.Context, key *dal.Key, updates []dal.Update, preconditions ...dal.Precondition) error {
-	deleteCached(ctx, key, t.isCacheable)
+func (t transaction) Update(ctx context.Context, key *dal.Key, updates []dal.Update, preconditions ...dal.Precondition) (err error) {
+	if err = deleteFromCacheByKey(ctx, key, t.isCacheable); err != nil {
+		return
+	}
 	return t.rw.Update(ctx, key, updates, preconditions...)
 }
 
-func (t transaction) UpdateMulti(ctx context.Context, keys []*dal.Key, updates []dal.Update, preconditions ...dal.Precondition) error {
-	deleteCachedByKeys(ctx, keys, t.isCacheable)
+func (t transaction) UpdateRecord(ctx context.Context, record dal.Record, updates []dal.Update, preconditions ...dal.Precondition) (err error) {
+	if err = deleteFromCacheByKey(ctx, record.Key(), t.isCacheable); err != nil {
+		return
+	}
+	if err = t.rw.UpdateRecord(ctx, record, updates, preconditions...); err == nil {
+		if err = setRecordToCache(ctx, record, "UpdateRecord"); err != nil {
+			return
+		}
+	}
+	return
+}
+
+func (t transaction) UpdateMulti(ctx context.Context, keys []*dal.Key, updates []dal.Update, preconditions ...dal.Precondition) (err error) {
+	if err = deleteCachedByKeys(ctx, keys, t.isCacheable); err != nil {
+		return
+	}
 	return t.rw.UpdateMulti(ctx, keys, updates, preconditions...)
 }
 
-func deleteCached(ctx context.Context, key *dal.Key, isCacheable func(key *dal.Key) bool) {
-	if !isCacheable(key) {
-		return
+func deleteFromCacheByKey(ctx context.Context, key *dal.Key, isCacheable func(key *dal.Key) bool) (err error) {
+	if isCacheable != nil && !isCacheable(key) {
+		return nil
 	}
 	mk := key.String()
-	_ = memcache.Delete(ctx, mk)
+	err = memcache.Delete(ctx, mk)
 	if Debugf != nil {
-		Debugf(ctx, "memcache4dalgo.deleteCached: %s", mk)
+		Debugf(ctx, "memcache4dalgo.deleteFromCacheByKey: %s", mk)
 	}
+	return
 }
 
-func deleteCachedByKeys(ctx context.Context, keys []*dal.Key, isCacheable func(key *dal.Key) bool) {
-	mks := make([]string, len(keys))
-	for i, k := range keys {
-		mks[i] = k.String()
+func deleteCachedByKeys(ctx context.Context, keys []*dal.Key, isCacheable func(key *dal.Key) bool) (err error) {
+	mks := make([]string, 0, len(keys))
+	for _, k := range keys {
+		if isCacheable == nil || isCacheable(k) {
+			mks = append(mks, k.String())
+		}
 	}
-	_ = memcache.DeleteMulti(ctx, mks)
-	if Debugf != nil {
+	if len(mks) == 1 {
+		err = memcache.Delete(ctx, mks[0])
+	} else if len(mks) > 1 {
+		err = memcache.DeleteMulti(ctx, mks)
+	}
+	if len(mks) > 0 && Debugf != nil {
 		Debugf(ctx, "memcache4dalgo.deleteCachedByKeys: %v", strings.Join(mks, ", "))
 	}
+	return
 }
 
-func deleteCached4records(ctx context.Context, records []dal.Record) {
-	keys := make([]string, len(records))
-	for i, r := range records {
-		keys[i] = r.Key().String()
+func deleteRecordsFromCache(ctx context.Context, records []dal.Record, isCacheable func(key *dal.Key) bool) (err error) {
+	keys := make([]*dal.Key, len(records))
+	mks := make([]string, 0, len(keys))
+	for _, r := range records {
+		key := r.Key()
+		if isCacheable != nil && !isCacheable(key) {
+			continue
+		}
+		keys = append(keys, key)
+		mks = append(mks, key.String())
 	}
-	_ = memcache.DeleteMulti(ctx, keys)
+	if len(mks) == 1 {
+		err = memcache.Delete(ctx, mks[0])
+	} else if len(mks) > 1 {
+		err = memcache.DeleteMulti(ctx, mks)
+	}
+	if len(mks) > 0 && Debugf != nil {
+		Debugf(ctx, "memcache4dalgo.deleteRecordsFromCache: %v", strings.Join(mks, ", "))
+	}
+	return err
 }
 
-func (t transaction) Insert(ctx context.Context, record dal.Record, opts ...dal.InsertOption) error {
-	err := t.rw.Insert(ctx, record, opts...)
-	if err == nil {
+func (t transaction) Insert(ctx context.Context, record dal.Record, opts ...dal.InsertOption) (err error) {
+	if err = t.rw.Insert(ctx, record, opts...); err == nil {
 		key := record.Key().String()
 		var value []byte
 		if value, err = json.Marshal(record.Data()); err == nil {
-			_ = memcache.Add(ctx, &memcache.Item{Value: value, Key: key})
+			if err = memcache.Add(ctx, &memcache.Item{Value: value, Key: key}); err != nil {
+				return
+			}
 		}
 	}
-	return err
+	return
 }
 
 func (t transaction) InsertMulti(ctx context.Context, records []dal.Record, opts ...dal.InsertOption) error {

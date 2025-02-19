@@ -36,14 +36,26 @@ func (v database) Adapter() dal.Adapter {
 
 func (v database) RunReadonlyTransaction(ctx context.Context, f dal.ROTxWorker, options ...dal.TransactionOption) error {
 	return v.db.RunReadonlyTransaction(ctx, func(ctx context.Context, tx dal.ReadTransaction) error {
-		return f(ctx, transaction{ro: tx, isCacheable: v.isCacheable})
+		return f(ctx, &transaction{ro: tx, isCacheable: v.isCacheable})
 	}, options...)
 }
 
-func (v database) RunReadwriteTransaction(ctx context.Context, f dal.RWTxWorker, options ...dal.TransactionOption) error {
-	return v.db.RunReadwriteTransaction(ctx, func(ctx context.Context, tx dal.ReadwriteTransaction) error {
-		return f(ctx, transaction{ro: tx, rw: tx, isCacheable: v.isCacheable})
+func (v database) RunReadwriteTransaction(ctx context.Context, f dal.RWTxWorker, options ...dal.TransactionOption) (err error) {
+	var t *transaction
+	err = v.db.RunReadwriteTransaction(ctx, func(ctx context.Context, tx dal.ReadwriteTransaction) error {
+		t = &transaction{ro: tx, rw: tx, isCacheable: v.isCacheable}
+		return f(ctx, t)
 	}, options...)
+	if err == nil {
+		if len(t.recordForCache) == 1 {
+			if t.isCacheable(t.recordForCache[0].Key()) {
+				_ = setRecordToCache(ctx, t.recordForCache[0], "RunReadwriteTransaction")
+			}
+		} else {
+			_ = setRecordsToCache(ctx, t.recordForCache, "RunReadwriteTransaction", t.isCacheable)
+		}
+	}
+	return err
 }
 
 func (v database) GetMulti(ctx context.Context, records []dal.Record) error {

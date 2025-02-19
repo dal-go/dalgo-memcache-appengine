@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/dal-go/dalgo/dal"
+	"github.com/dal-go/dalgo/update"
 	"google.golang.org/appengine/memcache"
 	"strings"
 )
@@ -67,14 +68,14 @@ func (t transaction) DeleteMulti(ctx context.Context, keys []*dal.Key) (err erro
 	return t.rw.DeleteMulti(ctx, keys)
 }
 
-func (t transaction) Update(ctx context.Context, key *dal.Key, updates []dal.Update, preconditions ...dal.Precondition) (err error) {
+func (t transaction) Update(ctx context.Context, key *dal.Key, updates []update.Update, preconditions ...dal.Precondition) (err error) {
 	if err = deleteFromCacheByKey(ctx, key, t.isCacheable); err != nil {
 		return
 	}
 	return t.rw.Update(ctx, key, updates, preconditions...)
 }
 
-func (t transaction) UpdateRecord(ctx context.Context, record dal.Record, updates []dal.Update, preconditions ...dal.Precondition) (err error) {
+func (t transaction) UpdateRecord(ctx context.Context, record dal.Record, updates []update.Update, preconditions ...dal.Precondition) (err error) {
 	if err = deleteFromCacheByKey(ctx, record.Key(), t.isCacheable); err != nil {
 		return
 	}
@@ -86,7 +87,7 @@ func (t transaction) UpdateRecord(ctx context.Context, record dal.Record, update
 	return
 }
 
-func (t transaction) UpdateMulti(ctx context.Context, keys []*dal.Key, updates []dal.Update, preconditions ...dal.Precondition) (err error) {
+func (t transaction) UpdateMulti(ctx context.Context, keys []*dal.Key, updates []update.Update, preconditions ...dal.Precondition) (err error) {
 	if err = deleteCachedByKeys(ctx, keys, t.isCacheable); err != nil {
 		return
 	}

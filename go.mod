@@ -3,7 +3,7 @@ module github.com/dal-go/dalgo-memcache-appengine
 go 1.23.6
 
 require (
-	github.com/dal-go/dalgo v0.17.0
+	github.com/dal-go/dalgo v0.18.0
 	google.golang.org/appengine v1.6.8
 )
 

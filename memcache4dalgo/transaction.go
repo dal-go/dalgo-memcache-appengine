@@ -159,7 +159,6 @@ func (t *transaction) flushItemsToCache(ctx context.Context) error {
 			}
 			Warningf(ctx, "failed to set to memcache by %d keys=[%s]: %w", len(notSetKeys), strings.Join(notSetKeys, ","), err)
 			keysToDelete = append(keysToDelete, notSetKeys...)
-			err = nil
 		}
 	}
 	if len(keysToDelete) > 0 {

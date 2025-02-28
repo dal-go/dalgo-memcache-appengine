@@ -24,9 +24,7 @@ func getRecord(
 	mk := key.String()
 	started := time.Now()
 	debugf := func(ctx context.Context, format string, args ...any) {
-		if Debugf != nil {
-			Debugf(ctx, "memcache4dalgo.getRecord("+caller+"): "+format, args...)
-		}
+		Debugf(ctx, "memcache4dalgo.getRecord("+caller+"): "+format, args...)
 	}
 	var item *memcache.Item
 	if item, err = memcache.Get(ctx, mk); err == nil {
@@ -40,29 +38,23 @@ func getRecord(
 	} else if errors.Is(err, memcache.ErrCacheMiss) {
 		debugf(ctx, "cache miss on key=%s returned in %v", mk, time.Since(started))
 	} else {
-		// Ignore the error and try to get the record from the database
-		if Warningf != nil {
-			Warningf(ctx, "memcache.Get(key=%s) returned error in %v: %v", mk, time.Since(started), err)
-		} else {
-			debugf(ctx, "WARNING: memcache.Get(key=%s) returned error in %v: %v", mk, time.Since(started), err)
-		}
+		// Ignore the error and get the record from the database
+		Warningf(ctx, "memcache.Get(key=%s) returned error in %v: %v", mk, time.Since(started), err)
 	}
-	if err = get(ctx, record); err == nil {
+	if err = get(ctx, record); err == nil && isCacheable(key) {
 		if err = setRecordToCache(ctx, record, fmt.Sprintf("getRecord(%s)", caller)); err != nil {
-			return
+			Warningf(ctx, "failed to set record to cache with key=%s: %v", mk, err)
+			err = nil
 		}
 	}
 	return
 }
 
-func setRecordToCache(ctx context.Context, record dal.Record, caller string) (err error) {
-	var value []byte
-	if value, err = json.Marshal(record.Data()); err == nil {
+func setRecordToCache(ctx context.Context, record dal.Record, caller string) error {
+	if value, err := json.Marshal(record.Data()); err == nil {
 		mk := record.Key().String()
 		_ = memcache.Set(ctx, &memcache.Item{Value: value, Key: mk})
-		if Debugf != nil {
-			Debugf(ctx, "memcache4dalgo.%s: set record to cache with key=%s", caller, mk)
-		}
+		Debugf(ctx, "memcache4dalgo.%s: set record to cache with key=%s", caller, mk)
 	}
-	return
+	return nil
 }

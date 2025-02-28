@@ -32,9 +32,7 @@ func getMultiRecords(
 			r.SetError(nil)
 			if err = json.Unmarshal(item.Value, r.Data()); err == nil {
 				delete(recordsByKey, key)
-				if Debugf != nil {
-					Debugf(ctx, "memcache4dalgo.getMultiRecords: hit %s", key)
-				}
+				Debugf(ctx, "memcache4dalgo.getMultiRecords: hit %s", key)
 			}
 		}
 	}
@@ -66,9 +64,7 @@ func setRecordsToCache(ctx context.Context, records []dal.Record, caller string,
 		var value []byte
 		if value, err = json.Marshal(r.Data()); err == nil {
 			items = append(items, &memcache.Item{Value: value, Key: mk})
-			if Debugf != nil {
-				mks = append(mks, mk)
-			}
+			mks = append(mks, mk)
 		}
 	}
 	if len(items) == 1 {
@@ -76,7 +72,7 @@ func setRecordsToCache(ctx context.Context, records []dal.Record, caller string,
 	} else if len(items) > 1 {
 		err = memcache.SetMulti(ctx, items)
 	}
-	if Debugf != nil && len(mks) > 0 {
+	if len(mks) > 0 {
 		Debugf(ctx, "memcache4dalgo.%s: %v", caller, strings.Join(mks, ", "))
 	}
 	return

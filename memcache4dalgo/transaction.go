@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/dal-go/dalgo/dal"
 	"github.com/dal-go/dalgo/update"
-	"google.golang.org/appengine/memcache"
+	"google.golang.org/appengine/v2/memcache"
 	"slices"
 	"strings"
 )

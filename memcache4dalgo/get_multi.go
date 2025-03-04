@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/dal-go/dalgo/dal"
-	"google.golang.org/appengine/memcache"
+	"google.golang.org/appengine/v2/memcache"
 	"strings"
 )
 

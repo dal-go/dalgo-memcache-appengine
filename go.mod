@@ -4,7 +4,6 @@ go 1.23.6
 
 require (
 	github.com/dal-go/dalgo v0.18.1
-	google.golang.org/appengine v1.6.8
 	google.golang.org/appengine/v2 v2.0.6
 )
 

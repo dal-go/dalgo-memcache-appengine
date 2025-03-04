@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/dal-go/dalgo/dal"
-	"google.golang.org/appengine/memcache"
+	"google.golang.org/appengine/v2/memcache"
 	"time"
 )
 

@@ -46,6 +46,10 @@ func (t *transaction) Get(ctx context.Context, record dal.Record) error {
 	return getRecord(ctx, record, "tx", t.isCacheable, t.ro.Get)
 }
 
+func (t *transaction) Exists(ctx context.Context, key *dal.Key) (exists bool, err error) {
+	return existsByKey(ctx, key, "tx", t.isCacheable, t.ro.Exists)
+}
+
 func (t *transaction) GetMulti(ctx context.Context, records []dal.Record) error {
 	return getMultiRecords(ctx, records, t.isCacheable, t.ro.GetMulti)
 }

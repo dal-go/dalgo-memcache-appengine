@@ -10,6 +10,33 @@ import (
 	"time"
 )
 
+func existsByKey(
+	ctx context.Context,
+	key *dal.Key,
+	caller string,
+	isCacheable func(key *dal.Key) bool,
+	existsFunc func(ctx context.Context, key *dal.Key) (exists bool, err error),
+) (exists bool, err error) {
+	if !isCacheable(key) { // If the record is not cacheable, we just get it from the database
+		return existsFunc(ctx, key)
+	}
+	mk := key.String()
+	started := time.Now()
+	debugf := func(ctx context.Context, format string, args ...any) {
+		Debugf(ctx, "memcache4dalgo.existsByKey("+caller+"): "+format, args...)
+	}
+	var item *memcache.Item
+	if item, err = memcache.Get(ctx, mk); err == nil {
+		return len(item.Value) >= 0, nil
+	} else if errors.Is(err, memcache.ErrCacheMiss) {
+		debugf(ctx, "cache miss on key=%s returned in %v", mk, time.Since(started))
+	} else {
+		// Ignore the error and get the record from the database
+		Warningf(ctx, "memcache.Get(key=%s) returned error in %v: %v", mk, time.Since(started), err)
+	}
+	return existsFunc(ctx, key)
+}
+
 func getRecord(
 	ctx context.Context,
 	record dal.Record,

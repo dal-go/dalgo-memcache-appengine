@@ -69,3 +69,7 @@ func (v database) QueryAllRecords(ctx context.Context, query dal.Query) (records
 func (v database) Get(ctx context.Context, record dal.Record) (err error) {
 	return getRecord(ctx, record, "db", v.isCacheable, v.db.Get)
 }
+
+func (v database) Exists(ctx context.Context, key *dal.Key) (exists bool, err error) {
+	return existsByKey(ctx, key, "db", v.isCacheable, v.db.Exists)
+}

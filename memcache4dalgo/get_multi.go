@@ -10,10 +10,14 @@ import (
 
 func getMultiRecords(
 	ctx context.Context,
+	isInTransaction bool, // If in transaction, we do not get records from the cache
 	records []dal.Record,
 	isCacheable func(key *dal.Key) bool,
 	getMulti func(context.Context, []dal.Record) error,
 ) (err error) {
+	if len(records) == 0 {
+		return nil
+	}
 	keys := make([]*dal.Key, len(records))
 	mks := make([]string, 0, len(records))
 	recordsByKey := make(map[string]dal.Record, len(records))
@@ -21,18 +25,20 @@ func getMultiRecords(
 		keys[i] = r.Key()
 		mk := keys[i].String()
 		recordsByKey[mk] = r
-		if isCacheable == nil || isCacheable(keys[i]) {
+		if !isInTransaction && (isCacheable == nil || isCacheable(keys[i])) {
 			mks = append(mks, mk)
 		}
 	}
-	var itemsByKey map[string]*memcache.Item
-	if itemsByKey, err = memcache.GetMulti(ctx, mks); err == nil {
-		for key, item := range itemsByKey {
-			r := recordsByKey[key]
-			r.SetError(nil)
-			if err = json.Unmarshal(item.Value, r.Data()); err == nil {
-				delete(recordsByKey, key)
-				Debugf(ctx, "memcache4dalgo.getMultiRecords: hit %s", key)
+	if len(mks) > 0 {
+		var itemsByKey map[string]*memcache.Item
+		if itemsByKey, err = memcache.GetMulti(ctx, mks); err == nil {
+			for key, item := range itemsByKey {
+				r := recordsByKey[key]
+				r.SetError(nil)
+				if err = json.Unmarshal(item.Value, r.Data()); err == nil {
+					delete(recordsByKey, key)
+					Debugf(ctx, "memcache4dalgo.getMultiRecords: hit %s", key)
+				}
 			}
 		}
 	}

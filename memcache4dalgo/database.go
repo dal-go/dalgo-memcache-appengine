@@ -55,7 +55,7 @@ func (v database) RunReadwriteTransaction(ctx context.Context, f dal.RWTxWorker,
 }
 
 func (v database) GetMulti(ctx context.Context, records []dal.Record) error {
-	return getMultiRecords(ctx, records, v.isCacheable, v.db.GetMulti)
+	return getMultiRecords(ctx, false, records, v.isCacheable, v.db.GetMulti)
 }
 
 func (v database) QueryReader(ctx context.Context, query dal.Query) (dal.Reader, error) {
@@ -67,7 +67,7 @@ func (v database) QueryAllRecords(ctx context.Context, query dal.Query) (records
 }
 
 func (v database) Get(ctx context.Context, record dal.Record) (err error) {
-	return getRecord(ctx, record, "db", v.isCacheable, v.db.Get)
+	return getRecord(ctx, false, record, "db", v.isCacheable, v.db.Get)
 }
 
 func (v database) Exists(ctx context.Context, key *dal.Key) (exists bool, err error) {

@@ -39,6 +39,7 @@ func existsByKey(
 
 func getRecord(
 	ctx context.Context,
+	isInTransaction bool, // If in transaction, we do not get records from the cache
 	record dal.Record,
 	caller string,
 	isCacheable func(key *dal.Key) bool,
@@ -53,20 +54,22 @@ func getRecord(
 	debugf := func(ctx context.Context, format string, args ...any) {
 		Debugf(ctx, "memcache4dalgo.getRecord("+caller+"): "+format, args...)
 	}
-	var item *memcache.Item
-	if item, err = memcache.Get(ctx, mk); err == nil {
-		record.SetError(nil) // We must indicate we are going to access data for unmarshalling
-		if err = json.Unmarshal(item.Value, record.Data()); err == nil {
-			debugf(ctx, "cache hit on key=%s returned in %v", mk, time.Since(started))
-			return // No need t get the record from the database
-		} else { // Ignore the error and try to get the record from the database
-			debugf(ctx, "failed to unmarshal value from memcache, key=%s: %v", mk, err)
+	if !isInTransaction {
+		var item *memcache.Item
+		if item, err = memcache.Get(ctx, mk); err == nil {
+			record.SetError(nil) // We must indicate we are going to access data for unmarshalling
+			if err = json.Unmarshal(item.Value, record.Data()); err == nil {
+				debugf(ctx, "cache hit on key=%s returned in %v", mk, time.Since(started))
+				return // No need t get the record from the database
+			} else { // Ignore the error and try to get the record from the database
+				debugf(ctx, "failed to unmarshal value from memcache, key=%s: %v", mk, err)
+			}
+		} else if errors.Is(err, memcache.ErrCacheMiss) {
+			debugf(ctx, "cache miss on key=%s returned in %v", mk, time.Since(started))
+		} else {
+			// Ignore the error and get the record from the database
+			Warningf(ctx, "memcache.Get(key=%s) returned error in %v: %v", mk, time.Since(started), err)
 		}
-	} else if errors.Is(err, memcache.ErrCacheMiss) {
-		debugf(ctx, "cache miss on key=%s returned in %v", mk, time.Since(started))
-	} else {
-		// Ignore the error and get the record from the database
-		Warningf(ctx, "memcache.Get(key=%s) returned error in %v: %v", mk, time.Since(started), err)
 	}
 	if err = get(ctx, record); err == nil && isCacheable(key) {
 		if err = setRecordToCache(ctx, record, fmt.Sprintf("getRecord(%s)", caller)); err != nil {

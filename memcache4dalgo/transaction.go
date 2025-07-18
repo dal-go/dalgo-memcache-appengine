@@ -43,7 +43,7 @@ func (t *transaction) Options() dal.TransactionOptions {
 }
 
 func (t *transaction) Get(ctx context.Context, record dal.Record) error {
-	return getRecord(ctx, record, "tx", t.isCacheable, t.ro.Get)
+	return getRecord(ctx, true, record, "tx", t.isCacheable, t.ro.Get)
 }
 
 func (t *transaction) Exists(ctx context.Context, key *dal.Key) (exists bool, err error) {
@@ -51,7 +51,7 @@ func (t *transaction) Exists(ctx context.Context, key *dal.Key) (exists bool, er
 }
 
 func (t *transaction) GetMulti(ctx context.Context, records []dal.Record) error {
-	return getMultiRecords(ctx, records, t.isCacheable, t.ro.GetMulti)
+	return getMultiRecords(ctx, true, records, t.isCacheable, t.ro.GetMulti)
 }
 
 func (t *transaction) QueryReader(ctx context.Context, query dal.Query) (dal.Reader, error) {

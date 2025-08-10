@@ -34,6 +34,10 @@ func (v database) Adapter() dal.Adapter {
 	return v.db.Adapter()
 }
 
+func (v database) Schema() dal.Schema {
+	return nil
+}
+
 func (v database) RunReadonlyTransaction(ctx context.Context, f dal.ROTxWorker, options ...dal.TransactionOption) error {
 	return v.db.RunReadonlyTransaction(ctx, func(ctx context.Context, tx dal.ReadTransaction) error {
 		return f(ctx, &transaction{ro: tx, isCacheable: v.isCacheable})

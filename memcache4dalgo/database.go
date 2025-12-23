@@ -2,7 +2,10 @@ package memcache4dalgo
 
 import (
 	"context"
+
 	"github.com/dal-go/dalgo/dal"
+	"github.com/dal-go/dalgo/recordset"
+
 	"reflect"
 )
 
@@ -24,6 +27,11 @@ type database struct {
 	db dal.DB
 	// isCacheable returns true if the key is cacheable
 	isCacheable func(key *dal.Key) bool
+}
+
+func (v database) GetRecordsetReader(ctx context.Context, query dal.Query, rs *recordset.Recordset) (dal.RecordsetReader, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (v database) ID() string {
@@ -62,12 +70,8 @@ func (v database) GetMulti(ctx context.Context, records []dal.Record) error {
 	return getMultiRecords(ctx, false, records, v.isCacheable, v.db.GetMulti)
 }
 
-func (v database) QueryReader(ctx context.Context, query dal.Query) (dal.Reader, error) {
-	return v.db.QueryReader(ctx, query)
-}
-
-func (v database) QueryAllRecords(ctx context.Context, query dal.Query) (records []dal.Record, err error) {
-	return v.db.QueryAllRecords(ctx, query)
+func (v database) GetRecordsReader(ctx context.Context, query dal.Query) (dal.RecordsReader, error) {
+	return v.db.GetRecordsReader(ctx, query)
 }
 
 func (v database) Get(ctx context.Context, record dal.Record) (err error) {

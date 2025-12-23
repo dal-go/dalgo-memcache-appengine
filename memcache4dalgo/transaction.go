@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/dal-go/dalgo/dal"
-	"github.com/dal-go/dalgo/update"
-	"google.golang.org/appengine/v2/memcache"
 	"slices"
 	"strings"
+
+	"github.com/dal-go/dalgo/dal"
+	"github.com/dal-go/dalgo/recordset"
+	"github.com/dal-go/dalgo/update"
+	"google.golang.org/appengine/v2/memcache"
 )
 
 type transaction struct {
@@ -17,6 +19,11 @@ type transaction struct {
 	// isCacheable returns true if the key is cacheable
 	isCacheable     func(key *dal.Key) bool
 	itemsForCaching []*memcache.Item
+}
+
+func (t *transaction) GetRecordsetReader(ctx context.Context, query dal.Query, rs *recordset.Recordset) (dal.RecordsetReader, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (t *transaction) addRecordsForCaching(ctx context.Context, record ...dal.Record) {
@@ -54,12 +61,8 @@ func (t *transaction) GetMulti(ctx context.Context, records []dal.Record) error 
 	return getMultiRecords(ctx, true, records, t.isCacheable, t.ro.GetMulti)
 }
 
-func (t *transaction) QueryReader(ctx context.Context, query dal.Query) (dal.Reader, error) {
-	return t.ro.QueryReader(ctx, query)
-}
-
-func (t *transaction) QueryAllRecords(ctx context.Context, query dal.Query) (records []dal.Record, err error) {
-	return t.ro.QueryAllRecords(ctx, query)
+func (t *transaction) GetRecordsReader(ctx context.Context, query dal.Query) (dal.RecordsReader, error) {
+	return t.ro.GetRecordsReader(ctx, query)
 }
 
 func (t *transaction) Set(ctx context.Context, record dal.Record) (err error) {

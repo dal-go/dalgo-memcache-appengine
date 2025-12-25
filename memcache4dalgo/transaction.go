@@ -21,11 +21,6 @@ type transaction struct {
 	itemsForCaching []*memcache.Item
 }
 
-func (t *transaction) GetRecordsetReader(ctx context.Context, query dal.Query, rs *recordset.Recordset) (dal.RecordsetReader, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
 func (t *transaction) addRecordsForCaching(ctx context.Context, record ...dal.Record) {
 	for _, r := range record {
 		if !t.isCacheable(r.Key()) {
@@ -61,8 +56,12 @@ func (t *transaction) GetMulti(ctx context.Context, records []dal.Record) error 
 	return getMultiRecords(ctx, true, records, t.isCacheable, t.ro.GetMulti)
 }
 
-func (t *transaction) GetRecordsReader(ctx context.Context, query dal.Query) (dal.RecordsReader, error) {
-	return t.ro.GetRecordsReader(ctx, query)
+func (t *transaction) ExecuteQueryToRecordsReader(ctx context.Context, query dal.Query) (dal.RecordsReader, error) {
+	return t.ro.ExecuteQueryToRecordsReader(ctx, query)
+}
+
+func (t *transaction) ExecuteQueryToRecordsetReader(ctx context.Context, query dal.Query, options ...recordset.Option) (dal.RecordsetReader, error) {
+	return t.ro.ExecuteQueryToRecordsetReader(ctx, query, options...)
 }
 
 func (t *transaction) Set(ctx context.Context, record dal.Record) (err error) {

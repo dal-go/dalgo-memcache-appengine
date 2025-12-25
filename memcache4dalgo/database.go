@@ -29,11 +29,6 @@ type database struct {
 	isCacheable func(key *dal.Key) bool
 }
 
-func (v database) GetRecordsetReader(ctx context.Context, query dal.Query, rs *recordset.Recordset) (dal.RecordsetReader, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
 func (v database) ID() string {
 	return "cloud.google.com/go/memcache/apiv1"
 }
@@ -70,8 +65,25 @@ func (v database) GetMulti(ctx context.Context, records []dal.Record) error {
 	return getMultiRecords(ctx, false, records, v.isCacheable, v.db.GetMulti)
 }
 
-func (v database) GetRecordsReader(ctx context.Context, query dal.Query) (dal.RecordsReader, error) {
-	return v.db.GetRecordsReader(ctx, query)
+func (v database) ExecuteQueryToRecordsReader(ctx context.Context, query dal.Query) (dal.RecordsReader, error) {
+	if ctx == nil {
+		panic("ctx is nil")
+	}
+	if query == nil {
+		panic("query is nil")
+	}
+	return nil, dal.ErrNotImplementedYet
+}
+
+func (v database) ExecuteQueryToRecordsetReader(ctx context.Context, query dal.Query, options ...recordset.Option) (dal.RecordsetReader, error) {
+	if ctx == nil {
+		panic("ctx is nil")
+	}
+	if query == nil {
+		panic("query is nil")
+	}
+	_ = recordset.NewOptions(options...)
+	return nil, dal.ErrNotImplementedYet
 }
 
 func (v database) Get(ctx context.Context, record dal.Record) (err error) {

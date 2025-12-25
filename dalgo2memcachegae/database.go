@@ -1,4 +1,4 @@
-package memcache4dalgo
+package dalgo2memcachegae
 
 import (
 	"context"
@@ -72,7 +72,7 @@ func (v database) ExecuteQueryToRecordsReader(ctx context.Context, query dal.Que
 	if query == nil {
 		panic("query is nil")
 	}
-	return nil, dal.ErrNotImplementedYet
+	return nil, dal.ErrNotSupported
 }
 
 func (v database) ExecuteQueryToRecordsetReader(ctx context.Context, query dal.Query, options ...recordset.Option) (dal.RecordsetReader, error) {
@@ -83,7 +83,7 @@ func (v database) ExecuteQueryToRecordsetReader(ctx context.Context, query dal.Q
 		panic("query is nil")
 	}
 	_ = recordset.NewOptions(options...)
-	return nil, dal.ErrNotImplementedYet
+	return nil, dal.ErrNotSupported
 }
 
 func (v database) Get(ctx context.Context, record dal.Record) (err error) {

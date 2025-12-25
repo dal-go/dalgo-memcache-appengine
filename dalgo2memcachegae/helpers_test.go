@@ -1,4 +1,4 @@
-package memcache4dalgo
+package dalgo2memcachegae
 
 import "testing"
 

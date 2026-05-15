@@ -37,6 +37,10 @@ func (v database) Adapter() dal.Adapter {
 	return v.db.Adapter()
 }
 
+func (v database) SupportsConcurrentConnections() bool {
+	return v.db.SupportsConcurrentConnections()
+}
+
 func (v database) Schema() dal.Schema {
 	return nil
 }

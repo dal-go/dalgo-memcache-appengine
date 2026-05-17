@@ -5,7 +5,7 @@ go 1.24.0
 toolchain go1.26.3
 
 require (
-	github.com/dal-go/dalgo v0.42.2
+	github.com/dal-go/dalgo v0.43.1
 	google.golang.org/appengine/v2 v2.0.6
 )
 

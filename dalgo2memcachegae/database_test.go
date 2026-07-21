@@ -1,7 +1,7 @@
 package dalgo2memcachegae
 
 import (
-	"github.com/dal-go/dalgo/dal"
+	"github.com/dal-go/record"
 	"strings"
 	"testing"
 )
@@ -9,7 +9,7 @@ import (
 func TestNewDB(t *testing.T) {
 	type args struct {
 		db          *database
-		isCacheable func(key *dal.Key) bool
+		isCacheable func(key *record.Key) bool
 	}
 	tests := []struct {
 		name        string
@@ -28,7 +28,7 @@ func TestNewDB(t *testing.T) {
 			name: "isCacheable",
 			args: args{
 				db: new(database),
-				isCacheable: func(key *dal.Key) bool {
+				isCacheable: func(key *record.Key) bool {
 					return false
 				},
 			},

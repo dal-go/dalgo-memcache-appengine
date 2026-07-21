@@ -5,17 +5,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/dal-go/dalgo/dal"
+
+	dalrecord "github.com/dal-go/record"
 	"google.golang.org/appengine/v2/memcache"
 	"time"
 )
 
 func existsByKey(
 	ctx context.Context,
-	key *dal.Key,
+	key *dalrecord.Key,
 	caller string,
-	isCacheable func(key *dal.Key) bool,
-	existsFunc func(ctx context.Context, key *dal.Key) (exists bool, err error),
+	isCacheable func(key *dalrecord.Key) bool,
+	existsFunc func(ctx context.Context, key *dalrecord.Key) (exists bool, err error),
 ) (exists bool, err error) {
 	if !isCacheable(key) { // If the record is not cacheable, we just get it from the database
 		return existsFunc(ctx, key)
@@ -40,10 +41,10 @@ func existsByKey(
 func getRecord(
 	ctx context.Context,
 	isInTransaction bool, // If in transaction, we do not get records from the cache
-	record dal.Record,
+	record dalrecord.Record,
 	caller string,
-	isCacheable func(key *dal.Key) bool,
-	get func(ctx context.Context, record dal.Record) error,
+	isCacheable func(key *dalrecord.Key) bool,
+	get func(ctx context.Context, record dalrecord.Record) error,
 ) (err error) {
 	key := record.Key()
 	if !isCacheable(key) { // If the record is not cacheable, we just get it from the database
@@ -80,7 +81,7 @@ func getRecord(
 	return
 }
 
-func setRecordToCache(ctx context.Context, record dal.Record, caller string) error {
+func setRecordToCache(ctx context.Context, record dalrecord.Record, caller string) error {
 	if value, err := json.Marshal(record.Data()); err == nil {
 		mk := record.Key().String()
 		_ = memcache.Set(ctx, &memcache.Item{Value: value, Key: mk})

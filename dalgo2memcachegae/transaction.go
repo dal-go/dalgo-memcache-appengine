@@ -9,7 +9,8 @@ import (
 
 	"github.com/dal-go/dalgo/dal"
 	"github.com/dal-go/dalgo/recordset"
-	"github.com/dal-go/dalgo/update"
+	dalrecord "github.com/dal-go/record"
+	"github.com/dal-go/record/update"
 	"google.golang.org/appengine/v2/memcache"
 )
 
@@ -17,11 +18,11 @@ type transaction struct {
 	ro dal.ReadTransaction
 	rw dal.ReadwriteTransaction
 	// isCacheable returns true if the key is cacheable
-	isCacheable     func(key *dal.Key) bool
+	isCacheable     func(key *dalrecord.Key) bool
 	itemsForCaching []*memcache.Item
 }
 
-func (t *transaction) addRecordsForCaching(ctx context.Context, record ...dal.Record) {
+func (t *transaction) addRecordsForCaching(ctx context.Context, record ...dalrecord.Record) {
 	for _, r := range record {
 		if !t.isCacheable(r.Key()) {
 			continue
@@ -44,15 +45,15 @@ func (t *transaction) Options() dal.TransactionOptions {
 	return t.ro.Options()
 }
 
-func (t *transaction) Get(ctx context.Context, record dal.Record) error {
+func (t *transaction) Get(ctx context.Context, record dalrecord.Record) error {
 	return getRecord(ctx, true, record, "tx", t.isCacheable, t.ro.Get)
 }
 
-func (t *transaction) Exists(ctx context.Context, key *dal.Key) (exists bool, err error) {
+func (t *transaction) Exists(ctx context.Context, key *dalrecord.Key) (exists bool, err error) {
 	return existsByKey(ctx, key, "tx", t.isCacheable, t.ro.Exists)
 }
 
-func (t *transaction) GetMulti(ctx context.Context, records []dal.Record) error {
+func (t *transaction) GetMulti(ctx context.Context, records []dalrecord.Record) error {
 	return getMultiRecords(ctx, true, records, t.isCacheable, t.ro.GetMulti)
 }
 
@@ -64,28 +65,28 @@ func (t *transaction) ExecuteQueryToRecordsetReader(ctx context.Context, query d
 	return t.ro.ExecuteQueryToRecordsetReader(ctx, query, options...)
 }
 
-func (t *transaction) Set(ctx context.Context, record dal.Record) (err error) {
+func (t *transaction) Set(ctx context.Context, record dalrecord.Record) (err error) {
 	if err = t.rw.Set(ctx, record); err == nil {
 		t.addRecordsForCaching(ctx, record)
 	}
 	return err
 }
 
-func (t *transaction) SetMulti(ctx context.Context, records []dal.Record) (err error) {
+func (t *transaction) SetMulti(ctx context.Context, records []dalrecord.Record) (err error) {
 	if err = t.rw.SetMulti(ctx, records); err == nil {
 		t.addRecordsForCaching(ctx, records...)
 	}
 	return err
 }
 
-func (t *transaction) Delete(ctx context.Context, key *dal.Key) (err error) {
+func (t *transaction) Delete(ctx context.Context, key *dalrecord.Key) (err error) {
 	if err = t.rw.Delete(ctx, key); err == nil && t.isCacheable(key) {
 		t.itemsForCaching = append(t.itemsForCaching, &memcache.Item{Key: key.String()})
 	}
 	return err
 }
 
-func (t *transaction) DeleteMulti(ctx context.Context, keys []*dal.Key) (err error) {
+func (t *transaction) DeleteMulti(ctx context.Context, keys []*dalrecord.Key) (err error) {
 	if err = t.rw.DeleteMulti(ctx, keys); err == nil {
 		for _, key := range keys {
 			if t.isCacheable(key) {
@@ -96,21 +97,21 @@ func (t *transaction) DeleteMulti(ctx context.Context, keys []*dal.Key) (err err
 	return err
 }
 
-func (t *transaction) Update(ctx context.Context, key *dal.Key, updates []update.Update, preconditions ...dal.Precondition) (err error) {
+func (t *transaction) Update(ctx context.Context, key *dalrecord.Key, updates []update.Update, preconditions ...dal.Precondition) (err error) {
 	if err = t.rw.Update(ctx, key, updates, preconditions...); err == nil {
 		t.itemsForCaching = append(t.itemsForCaching, &memcache.Item{Key: key.String()})
 	}
 	return err
 }
 
-func (t *transaction) UpdateRecord(ctx context.Context, record dal.Record, updates []update.Update, preconditions ...dal.Precondition) (err error) {
+func (t *transaction) UpdateRecord(ctx context.Context, record dalrecord.Record, updates []update.Update, preconditions ...dal.Precondition) (err error) {
 	if err = t.rw.UpdateRecord(ctx, record, updates, preconditions...); err == nil {
 		t.addRecordsForCaching(ctx, record)
 	}
 	return err
 }
 
-func (t *transaction) UpdateMulti(ctx context.Context, keys []*dal.Key, updates []update.Update, preconditions ...dal.Precondition) (err error) {
+func (t *transaction) UpdateMulti(ctx context.Context, keys []*dalrecord.Key, updates []update.Update, preconditions ...dal.Precondition) (err error) {
 	if err = t.rw.UpdateMulti(ctx, keys, updates, preconditions...); err == nil {
 		for _, key := range keys {
 			if t.isCacheable(key) {
@@ -121,14 +122,14 @@ func (t *transaction) UpdateMulti(ctx context.Context, keys []*dal.Key, updates 
 	return err
 }
 
-func (t *transaction) Insert(ctx context.Context, record dal.Record, opts ...dal.InsertOption) (err error) {
+func (t *transaction) Insert(ctx context.Context, record dalrecord.Record, opts ...dal.InsertOption) (err error) {
 	if err = t.rw.Insert(ctx, record, opts...); err == nil {
 		t.addRecordsForCaching(ctx, record)
 	}
 	return
 }
 
-func (t *transaction) InsertMulti(ctx context.Context, records []dal.Record, opts ...dal.InsertOption) (err error) {
+func (t *transaction) InsertMulti(ctx context.Context, records []dalrecord.Record, opts ...dal.InsertOption) (err error) {
 	if err = t.rw.InsertMulti(ctx, records, opts...); err == nil {
 		t.addRecordsForCaching(ctx, records...)
 	}

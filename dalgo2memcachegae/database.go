@@ -6,6 +6,7 @@ import (
 	"github.com/dal-go/dalgo/dal"
 	"github.com/dal-go/dalgo/recordset"
 
+	dalrecord "github.com/dal-go/record"
 	"reflect"
 )
 
@@ -16,7 +17,7 @@ func isNil(i interface{}) bool {
 	return reflect.ValueOf(i).IsNil()
 }
 
-func NewDB(db dal.DB, isCacheable func(key *dal.Key) bool) dal.DB {
+func NewDB(db dal.DB, isCacheable func(key *dalrecord.Key) bool) dal.DB {
 	if isNil(db) {
 		panic("db is nil")
 	}
@@ -26,7 +27,7 @@ func NewDB(db dal.DB, isCacheable func(key *dal.Key) bool) dal.DB {
 type database struct {
 	db dal.DB
 	// isCacheable returns true if the key is cacheable
-	isCacheable func(key *dal.Key) bool
+	isCacheable func(key *dalrecord.Key) bool
 }
 
 func (v database) ID() string {
@@ -65,7 +66,7 @@ func (v database) RunReadwriteTransaction(ctx context.Context, f dal.RWTxWorker,
 	return err
 }
 
-func (v database) GetMulti(ctx context.Context, records []dal.Record) error {
+func (v database) GetMulti(ctx context.Context, records []dalrecord.Record) error {
 	return getMultiRecords(ctx, false, records, v.isCacheable, v.db.GetMulti)
 }
 
@@ -90,10 +91,10 @@ func (v database) ExecuteQueryToRecordsetReader(ctx context.Context, query dal.Q
 	return nil, dal.ErrNotSupported
 }
 
-func (v database) Get(ctx context.Context, record dal.Record) (err error) {
+func (v database) Get(ctx context.Context, record dalrecord.Record) (err error) {
 	return getRecord(ctx, false, record, "db", v.isCacheable, v.db.Get)
 }
 
-func (v database) Exists(ctx context.Context, key *dal.Key) (exists bool, err error) {
+func (v database) Exists(ctx context.Context, key *dalrecord.Key) (exists bool, err error) {
 	return existsByKey(ctx, key, "db", v.isCacheable, v.db.Exists)
 }

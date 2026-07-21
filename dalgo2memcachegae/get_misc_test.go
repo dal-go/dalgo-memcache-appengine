@@ -2,15 +2,16 @@ package dalgo2memcachegae
 
 import (
 	"context"
-	"github.com/dal-go/dalgo/dal"
+
+	"github.com/dal-go/record"
 	"testing"
 )
 
 func TestExistsByKey_NotCacheable(t *testing.T) {
 	ctx := context.Background()
-	key := &dal.Key{}
+	key := &record.Key{}
 	called := false
-	exists, err := existsByKey(ctx, key, "test", func(_ *dal.Key) bool { return false }, func(ctx context.Context, k *dal.Key) (bool, error) {
+	exists, err := existsByKey(ctx, key, "test", func(_ *record.Key) bool { return false }, func(ctx context.Context, k *record.Key) (bool, error) {
 		called = true
 		if k == nil {
 			t.Fatal("key is nil in existsFunc")

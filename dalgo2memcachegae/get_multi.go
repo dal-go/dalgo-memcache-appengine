@@ -3,7 +3,8 @@ package dalgo2memcachegae
 import (
 	"context"
 	"encoding/json"
-	"github.com/dal-go/dalgo/dal"
+
+	"github.com/dal-go/record"
 	"google.golang.org/appengine/v2/memcache"
 	"strings"
 )
@@ -11,16 +12,16 @@ import (
 func getMultiRecords(
 	ctx context.Context,
 	isInTransaction bool, // If in transaction, we do not get records from the cache
-	records []dal.Record,
-	isCacheable func(key *dal.Key) bool,
-	getMulti func(context.Context, []dal.Record) error,
+	records []record.Record,
+	isCacheable func(key *record.Key) bool,
+	getMulti func(context.Context, []record.Record) error,
 ) (err error) {
 	if len(records) == 0 {
 		return nil
 	}
-	keys := make([]*dal.Key, len(records))
+	keys := make([]*record.Key, len(records))
 	mks := make([]string, 0, len(records))
-	recordsByKey := make(map[string]dal.Record, len(records))
+	recordsByKey := make(map[string]record.Record, len(records))
 	for i, r := range records {
 		keys[i] = r.Key()
 		mk := keys[i].String()
@@ -58,7 +59,7 @@ func getMultiRecords(
 	return err
 }
 
-func setRecordsToCache(ctx context.Context, records []dal.Record, caller string, isCacheable func(key *dal.Key) bool) (err error) {
+func setRecordsToCache(ctx context.Context, records []record.Record, caller string, isCacheable func(key *record.Key) bool) (err error) {
 	mks := make([]string, 0, len(records))
 	items := make([]*memcache.Item, 0, len(records))
 	for _, r := range records {

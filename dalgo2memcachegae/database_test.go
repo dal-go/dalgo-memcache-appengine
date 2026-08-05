@@ -53,8 +53,8 @@ func TestNewDB(t *testing.T) {
 			if got == nil {
 				t.Fatal("NewDB returned nil")
 			}
-			if got.(*database).db != tt.args.db {
-				t.Errorf("NewDB().db = %v, want %v", got.(*database).db, tt.args.db)
+			if got.(*database).DB != tt.args.db {
+				t.Errorf("NewDB().DB = %v, want %v", got.(*database).DB, tt.args.db)
 			}
 			if tt.args.isCacheable != nil && got.(*database).isCacheable == nil {
 				t.Error("NewDB().isCacheable = nil")

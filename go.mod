@@ -2,10 +2,10 @@ module github.com/dal-go/dalgo-memcache-appengine
 
 go 1.26.0
 
-toolchain go1.27.0
+toolchain go1.27.1
 
 require (
-	github.com/dal-go/dalgo v0.74.2
+	github.com/dal-go/dalgo v0.79.3
 	github.com/dal-go/record v0.1.3
 	google.golang.org/appengine/v2 v2.0.6
 )

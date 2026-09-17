@@ -5,13 +5,13 @@ go 1.26.0
 toolchain go1.27.1
 
 require (
-	github.com/dal-go/dalgo v0.80.4
+	github.com/dal-go/dalgo v0.80.11
 	github.com/dal-go/record v0.1.3
 	google.golang.org/appengine/v2 v2.0.6
 )
 
 require (
-	github.com/RoaringBitmap/roaring/v2 v2.27.0 // indirect
+	github.com/RoaringBitmap/roaring/v2 v2.28.0 // indirect
 	github.com/bits-and-blooms/bitset v1.24.6 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/mschoch/smat v0.2.0 // indirect

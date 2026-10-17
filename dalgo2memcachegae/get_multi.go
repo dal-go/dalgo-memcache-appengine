@@ -32,7 +32,7 @@ func getMultiRecords(
 	}
 	if len(mks) > 0 {
 		var itemsByKey map[string]*memcache.Item
-		if itemsByKey, err = memcache.GetMulti(ctx, mks); err == nil {
+		if itemsByKey, err = memcacheGetMulti(ctx, mks); err == nil {
 			for key, item := range itemsByKey {
 				r := recordsByKey[key]
 				r.SetError(nil)
@@ -75,9 +75,9 @@ func setRecordsToCache(ctx context.Context, records []record.Record, caller stri
 		}
 	}
 	if len(items) == 1 {
-		err = memcache.Set(ctx, items[0])
+		err = memcacheSet(ctx, items[0])
 	} else if len(items) > 1 {
-		err = memcache.SetMulti(ctx, items)
+		err = memcacheSetMulti(ctx, items)
 	}
 	if len(mks) > 0 {
 		Debugf(ctx, "memcache4dalgo.%s: %v", caller, strings.Join(mks, ", "))

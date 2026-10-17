@@ -27,7 +27,7 @@ func existsByKey(
 		Debugf(ctx, "memcache4dalgo.existsByKey("+caller+"): "+format, args...)
 	}
 	var item *memcache.Item
-	if item, err = memcache.Get(ctx, mk); err == nil {
+	if item, err = memcacheGet(ctx, mk); err == nil {
 		return len(item.Value) >= 0, nil
 	} else if errors.Is(err, memcache.ErrCacheMiss) {
 		debugf(ctx, "cache miss on key=%s returned in %v", mk, time.Since(started))
@@ -57,7 +57,7 @@ func getRecord(
 	}
 	if !isInTransaction {
 		var item *memcache.Item
-		if item, err = memcache.Get(ctx, mk); err == nil {
+		if item, err = memcacheGet(ctx, mk); err == nil {
 			record.SetError(nil) // We must indicate we are going to access data for unmarshalling
 			if err = json.Unmarshal(item.Value, record.Data()); err == nil {
 				debugf(ctx, "cache hit on key=%s returned in %v", mk, time.Since(started))
@@ -82,10 +82,14 @@ func getRecord(
 }
 
 func setRecordToCache(ctx context.Context, record dalrecord.Record, caller string) error {
-	if value, err := json.Marshal(record.Data()); err == nil {
-		mk := record.Key().String()
-		_ = memcache.Set(ctx, &memcache.Item{Value: value, Key: mk})
-		Debugf(ctx, "memcache4dalgo.%s: set record to cache with key=%s", caller, mk)
+	value, err := json.Marshal(record.Data())
+	if err != nil {
+		return err
 	}
+	mk := record.Key().String()
+	if err = memcacheSet(ctx, &memcache.Item{Value: value, Key: mk}); err != nil {
+		return err
+	}
+	Debugf(ctx, "memcache4dalgo.%s: set record to cache with key=%s", caller, mk)
 	return nil
 }

@@ -159,10 +159,10 @@ func (t *transaction) flushItemsToCache(ctx context.Context) error {
 		}
 	}
 	if len(itemsToSet) > 0 {
-		if err := memcache.SetMulti(ctx, itemsToSet); err != nil {
-			notSetKeys := make([]string, len(itemsToSet))
+		if err := memcacheSetMulti(ctx, itemsToSet); err != nil {
+			notSetKeys := make([]string, 0, len(itemsToSet))
 			for _, item := range itemsToSet {
-				notSetKeys = append(keysToDelete, item.Key)
+				notSetKeys = append(notSetKeys, item.Key)
 			}
 			Warningf(ctx, "failed to set to memcache by %d keys=[%s]: %w", len(notSetKeys), strings.Join(notSetKeys, ","), err)
 			keysToDelete = append(keysToDelete, notSetKeys...)
@@ -170,10 +170,10 @@ func (t *transaction) flushItemsToCache(ctx context.Context) error {
 	}
 	if len(keysToDelete) > 0 {
 		if len(keysToDelete) == 1 {
-			if err := memcache.Delete(ctx, keysToDelete[0]); err != nil {
+			if err := memcacheDelete(ctx, keysToDelete[0]); err != nil {
 				return fmt.Errorf("failed to delete from memcache by key=%s: %w", keysToDelete[0], err)
 			}
-		} else if err := memcache.DeleteMulti(ctx, keysToDelete); err != nil {
+		} else if err := memcacheDeleteMulti(ctx, keysToDelete); err != nil {
 			return fmt.Errorf("failed to delete from memcache by %d keys=[%s]: %w", len(keysToDelete), strings.Join(keysToDelete, ","), err)
 
 		}

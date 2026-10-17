@@ -104,7 +104,9 @@ func TestDatabase_Methods(t *testing.T) {
 
 	t.Run("ExecuteQueryToRecordsReader", func(t *testing.T) {
 		assertPanics(t, func() {
-			_, _ = db.ExecuteQueryToRecordsReader(nil, nil)
+			var nilCtx context.Context
+			//lint:ignore SA1012 testing nil context panic
+			_, _ = db.ExecuteQueryToRecordsReader(nilCtx, nil)
 		})
 		assertPanics(t, func() {
 			_, _ = db.ExecuteQueryToRecordsReader(ctx, nil)
@@ -118,7 +120,9 @@ func TestDatabase_Methods(t *testing.T) {
 
 	t.Run("ExecuteQueryToRecordsetReader", func(t *testing.T) {
 		assertPanics(t, func() {
-			_, _ = db.ExecuteQueryToRecordsetReader(nil, nil)
+			var nilCtx context.Context
+			//lint:ignore SA1012 testing nil context panic
+			_, _ = db.ExecuteQueryToRecordsetReader(nilCtx, nil)
 		})
 		assertPanics(t, func() {
 			_, _ = db.ExecuteQueryToRecordsetReader(ctx, nil)

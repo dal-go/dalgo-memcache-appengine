@@ -7,7 +7,7 @@ toolchain go1.27.4
 require (
 	github.com/dal-go/dalgo v0.102.4
 	github.com/dal-go/record v0.1.5
-	google.golang.org/appengine/v2 v2.0.6
+	google.golang.org/appengine/v2 v2.1.0
 )
 
 require (
@@ -16,6 +16,6 @@ require (
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/mschoch/smat v0.2.0 // indirect
 	github.com/strongo/random v0.0.3 // indirect
-	golang.org/x/sys v0.30.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 )
